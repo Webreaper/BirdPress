@@ -1,6 +1,10 @@
 # BirdPress
 Updates a post on a wordpress site with a list of recently-detected birds seen by the [BirdNet-Go](https://github.com/tphakala/birdnet-go) app. 
 
+Example [here](https://forestgreenvillage.co.uk/birds-in-forest-green-today/) 
+
+<img width="1152" height="920" alt="Screenshot 2026-07-07 at 08 00 09" src="https://github.com/user-attachments/assets/1ae3a1c5-8725-4923-807c-f4d1c385c56a" />
+
 ## Why?
 I wanted to create a page on our village website that shares the list of identified birds in my garden, semi-live. However, rather than exposing
 BirdNet-Go to the internet (which involves a potential security risk to my server) I built this tool to use a push model to write the identified
