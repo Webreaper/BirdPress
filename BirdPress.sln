@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BirdPress", "BirdPress.csproj", "{7270CB17-5E83-48F7-9AB8-3BD3BB5FE8B7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BirdPress", "BirdPress/BirdPress.csproj", "{7270CB17-5E83-48F7-9AB8-3BD3BB5FE8B7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
