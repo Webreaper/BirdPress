@@ -42,7 +42,7 @@ jobs:
         dotnet-version: 10.0.100
 
     - name: Build BirdPress-${{matrix.target}}
-      run: dotnet publish BirdPress/BirdPress.csproj -c Release --runtime ${{matrix.runtime}} --self-contained true -p:PublishTrimmed=false --property:PublishDir=${{github.workspace}}/publish /p:Version=1.0.${{github.run_number}}
+      run: dotnet publish BirdPress.sln -c Release --runtime ${{matrix.runtime}} --self-contained true -p:PublishTrimmed=false --property:PublishDir=${{github.workspace}}/publish /p:Version=1.0.${{github.run_number}}
     
     - name: Add Version File
       run: echo 1.0.${{github.run_number}} > ${{github.workspace}}/publish/version.txt
