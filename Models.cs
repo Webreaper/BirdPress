@@ -15,4 +15,5 @@ public record BirdPressSettings(
     string wordpressBaseUrl, 
     string wordpressUser, 
     string wordpressPassword, 
-    int wordpressPostId);
+    int wordpressPostId,
+    double minThreshold = 0.7);

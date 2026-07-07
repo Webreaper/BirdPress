@@ -115,7 +115,7 @@ public class BirdPress
 
         Console.WriteLine($"Updating Wordpress post for \"{updatedPost.Title?.Rendered}\"...");
 
-        //await wpClient.Posts.UpdateAsync(updatedPost);
+        await wpClient.Posts.UpdateAsync(updatedPost);
         
         Console.WriteLine($"Post updated successfully with {species.Count()} birds");
     }
@@ -142,8 +142,6 @@ public class BirdPress
         JsonSerializerOptions options = new JsonSerializerOptions();
         options.Converters.Add(new DateTimeConverterUsingDateTimeParse());
         
-        var todayStr = DateTime.Now.ToString("yyyy-MM-dd");
-
         var speciesList = await settings.birdNetUrl
             .AppendPathSegment("api")
             .AppendPathSegment("v2")
@@ -157,7 +155,7 @@ public class BirdPress
             .GetJsonAsync<IEnumerable<Species>>();
 
         var result =  speciesList
-            .Where(x => x.avg_confidence > 0.7)
+            .Where(x => x.avg_confidence > settings.minThreshold)
             .OrderByDescending(x => x.last_heard)
             .ToList();
 
@@ -181,7 +179,7 @@ public class BirdPress
         doc.LoadHtml(postHtml);
 
         var rootNode = doc.DocumentNode
-            .SelectNodes("//*[contains(., '[BirdNet]')]")?
+            .SelectNodes("//*[contains(., '[BirdPress]')]")?
             .FirstOrDefault();
 
         if (rootNode != null)
