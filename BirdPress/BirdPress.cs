@@ -115,7 +115,10 @@ public class BirdPress
 
         Console.WriteLine($"Updating Wordpress post for \"{updatedPost.Title?.Rendered}\"...");
 
-        await wpClient.Posts.UpdateAsync(updatedPost);
+        if( ! Debugger.IsAttached)
+            await wpClient.Posts.UpdateAsync(updatedPost);
+        else
+            Console.WriteLine(updatedPost.Content.Rendered);
         
         Console.WriteLine($"Post updated successfully with {species.Count()} birds");
     }
@@ -155,10 +158,10 @@ public class BirdPress
             .GetJsonAsync<IEnumerable<Species>>();
 
         var result =  speciesList
-            .Where(x => x.avg_confidence > settings.minThreshold)
+            .Where(x => x.max_confidence > settings.minThreshold)
             .OrderByDescending(x => x.last_heard)
             .ToList();
-
+        
         Console.WriteLine($"Retreved {result.Count()} birds from BirdNet-Go");
 
         return result;
