@@ -17,6 +17,12 @@ public class BirdPress
     private readonly Dictionary<string, MediaItem> urlFileLookup = new();
     private BirdPressSettings? settings;
 
+    private static void Log(string msg, params object[] args)
+    {
+        var line = string.Format(DateTime.Now.ToString("[yyyy-MMM-dd HH:mm:ss] ") + msg, args);
+        Console.WriteLine(line);
+    }
+
     public async Task Process()
     {
         try
@@ -26,7 +32,7 @@ public class BirdPress
 
             if (settings == null)
             {
-                Console.WriteLine("No settings found (or settings format was invalid)");
+                Log("No settings found (or settings format was invalid)");
                 return;
             }
 
@@ -35,10 +41,10 @@ public class BirdPress
             if (!settings.wordpressBaseUrl.Contains("wp-json"))
                 settings = settings with {wordpressBaseUrl = settings.wordpressBaseUrl + "/wp-json/" };
             
-            Console.WriteLine("Initialising BirdPress...");
-            Console.WriteLine($"  BirdNet server: {settings.birdNetUrl}");
-            Console.WriteLine($"  WordPress Instance: {settings.wordpressBaseUrl}");
-            Console.WriteLine($"  Post ID: {settings.wordpressPostId}");
+            Log("Initialising BirdPress...");
+            Log($"  BirdNet server: {settings.birdNetUrl}");
+            Log($"  WordPress Instance: {settings.wordpressBaseUrl}");
+            Log($"  Post ID: {settings.wordpressPostId}");
 
             var wpBaseAddress = new Uri(settings.wordpressBaseUrl);
             wpClient = new WordPressClient(wpBaseAddress);
@@ -48,13 +54,13 @@ public class BirdPress
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error: {ex.Message}");
+            Log($"Error: {ex.Message}");
         }
     }
 
     private async Task UploadThumbs(IEnumerable<Species> species)
     {
-        Console.WriteLine("Finding thumbnails for birds...");
+        Log("Finding thumbnails for birds...");
         
         ArgumentNullException.ThrowIfNull(wpClient);
         
@@ -62,7 +68,7 @@ public class BirdPress
         {
             if (string.IsNullOrEmpty(bird.thumbnail_url))
             {
-                Console.WriteLine($"No thumbnail available for {bird.common_name}");
+                Log($"No thumbnail available for {bird.common_name}");
                 continue;
             }
             
@@ -84,7 +90,7 @@ public class BirdPress
 
             if( mediaItem == null)
             {
-                Console.WriteLine($"Uploading thumbnail for {bird.common_name}");
+                Log($"Uploading thumbnail for {bird.common_name}");
                 
                 await using var imageStream = await settings.birdNetUrl
                     .AppendPathSegment(bird.thumbnail_url)
@@ -93,12 +99,12 @@ public class BirdPress
                 mediaItem = await wpClient.Media.CreateAsync(imageStream, fileName, "image/jpeg");
             }
             else
-                Console.WriteLine($"Found existing image for {bird.common_name}");
+                Log($"Found existing image for {bird.common_name}");
 
             urlFileLookup[bird.thumbnail_url] = mediaItem;
         }
         
-        Console.WriteLine($"Resolved {urlFileLookup.Count()} thumbnails of {species.Count()} birds");
+        Log($"Resolved {urlFileLookup.Count()} thumbnails of {species.Count()} birds");
     }
     
     private async Task PostToWordpress(IEnumerable<Species> species, int postId)
@@ -109,18 +115,18 @@ public class BirdPress
 
         await UploadThumbs(species);
 
-        Console.WriteLine($"Generating post content...");
+        Log($"Generating post content...");
 
         var updatedPost = await UpdatePost(post, species);
 
-        Console.WriteLine($"Updating Wordpress post for \"{updatedPost.Title?.Rendered}\"...");
+        Log($"Updating Wordpress post for \"{updatedPost.Title?.Rendered}\"...");
 
         if( ! Debugger.IsAttached)
             await wpClient.Posts.UpdateAsync(updatedPost);
         else
-            Console.WriteLine(updatedPost.Content.Rendered);
+            Log(updatedPost.Content.Rendered);
         
-        Console.WriteLine($"Post updated successfully with {species.Count()} birds");
+        Log($"Post updated successfully with {species.Count()} birds");
     }
     
     public class DateTimeConverterUsingDateTimeParse : JsonConverter<DateTime>
@@ -140,7 +146,7 @@ public class BirdPress
     
     private async Task<IEnumerable<Species>> GetBirds()
     {
-        Console.WriteLine($"Retreiving bird list from BirdNet-Go...");
+        Log($"Retreiving bird list from BirdNet-Go...");
 
         JsonSerializerOptions options = new JsonSerializerOptions();
         options.Converters.Add(new DateTimeConverterUsingDateTimeParse());
@@ -162,14 +168,14 @@ public class BirdPress
             .OrderByDescending(x => x.last_heard)
             .ToList();
         
-        Console.WriteLine($"Retreved {result.Count()} birds from BirdNet-Go");
+        Log($"Retreved {result.Count()} birds from BirdNet-Go");
 
         return result;
     }
     
     private async Task<Post> UpdatePost(Post post, IEnumerable<Species> species)
     {
-        Console.WriteLine("Generating HTML for post update...");
+        Log("Generating HTML for post update...");
         
         const string rootNodeId = "birdnet";
         var postHtml = post.Content?.Rendered;
@@ -231,7 +237,6 @@ public class BirdPress
         AddTableCell(header, "Image", "th");
         AddTableCell(header, "Name", "th");
         AddTableCell(header, "Last Heard", "th");
-        AddTableCell(header, "Identifications", "th");
         AddTableCell(header, "Accuracy", "th");
 
         foreach (var bird in species)
@@ -249,9 +254,8 @@ public class BirdPress
             string format = bird.last_heard.Date == DateTime.Now.Date ? "HH:mm" : "dd-MMM-yyyy";
             
             AddTableCell(row, imageLink);
-            AddTableCell(row, $"{bird.common_name} ({bird.scientific_name})");
+            AddTableCell(row, $"{bird.common_name} (<span style=\"font-style: italic;\">{bird.scientific_name}</span>)");
             AddTableCell(row, bird.last_heard.ToString(format));
-            AddTableCell(row, bird.count.ToString());
             AddTableCell(row, bird.avg_confidence.ToString("P0"));
         }
 
